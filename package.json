@@ -2,26 +2,22 @@
   "name": "imgrid",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/imgrid.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
+  "preferGlobal": true,
+  "bin": "index.js",
   "author": "",
   "license": "ISC",
   "dependencies": {
     "async": "^1.5.2",
     "bluebird": "^3.3.4",
     "cpr": "^1.1.1",
-    "flagged-respawn": "^0.3.1",
-    "glob-promise": "^1.0.6",
-    "im-resize": "^2.3.1",
-    "imagemin": "^4.0.0",
     "lodash": "^4.6.1",
     "meow": "^3.7.0",
     "mkdirp": "^0.5.1",
-    "photoswipe": "^4.1.1",
     "sharp": "^0.14.1",
-    "v8flags": "^2.0.11"
   }
 }
