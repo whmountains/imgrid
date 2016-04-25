@@ -20,10 +20,13 @@ let saveImg = function({basePath, sharpSource, filename, suffix, format}) {
   // we can't use sharp's promise because it doesn't give us any image info
   return new Promise((resolve, reject) => {
 
+    // place to save image info
+    let imgInfo = {}
+
     // defined separately so we can remove it from the EventEmitter
     let imgCreated = function() {
       console.log(`${c.green('CREATE')} ${createPath}`)
-      resolve()
+      resolve(imgInfo)
     }
 
     // calculate the path to the new image
@@ -39,6 +42,9 @@ let saveImg = function({basePath, sharpSource, filename, suffix, format}) {
     stream.toFormat(format)
     // pipe to dest file
     stream.pipe(dstFile)
+
+    // save info events
+    stream.on('info', i => imgInfo = i)
 
     // reject on errors
     stream.on('error', e => {
@@ -75,19 +81,6 @@ var convertImg = function({image, cfg}) {
   let thumbnail  = pipeline.clone()
     .resize(null,250)
 
-  // wait to get the new dimentions of new images
-  let infoActions = Promise.all([
-    imgInfo(fullscreen),
-    imgInfo(thumbnail)
-  ])
-  // save them
-  .then(function(infos) {
-    image.full.w  = infos[0].width
-    image.full.h  = infos[0].height
-    image.thumb.w = infos[1].width
-    image.thumb.h = infos[1].height
-  })
-
   // save the images to files
   let saveActions = Promise.all([
     save(thumbnail,  '-thumb', 'jpeg'),
@@ -95,16 +88,27 @@ var convertImg = function({image, cfg}) {
     save(fullscreen, '-full',  'jpeg'),
     save(fullscreen, '-full',  'webp'),
   ])
+  // extract image dimentions
+  .then(infos => {
+    image.full = {
+      w: infos[0].width,
+      h: infos[0].height
+    }
+    image.thumb = {
+      w: infos[2].width,
+      h: infos[2].height
+    }
+  })
+  // catch errors reading images
   .catch(e => {
     console.log(`${c.red('ERROR')}  ${image.src}`)
     console.log(e)
   })
 
   // wait for everything to finish
-  return Promise.all([infoActions, saveActions])
+  return saveActions
   // return the image objects
   .then(function() {
-    console.log(image)
     return {image, cfg}
   })
 

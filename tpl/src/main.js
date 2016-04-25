@@ -25,16 +25,25 @@ let setupLoadingAnim = function(grid) {
   let images = grid.children
 
   for (var i = 0; i < images.length; i++) {
-    let img = images[i]
+    let img = images[i].children[1]
     img.onload = enterQueue.bind(this, i)
   }
 }
 
 let insertImages = function({grid, images}) {
-  let imgHTML = images.map(img => {
-    return `<img src="img/${img.webpthumb}" scrset="img/${img.webpthumb}, img/${img.jpegthumb}" />`
+
+  grid.innerHTML = images.map(img => {
+
+    let imgPath = `img/${img.name}-thumb`
+
+    return `
+      <picture>
+        <source type="image/webp" srcset="${imgPath}.webp">
+        <img src="${imgPath}.jpeg"/>
+      </picture>
+    `
+
   }).join('')
-  grid.innerHTML = imgHTML
 }
 
 let getSlides = function(images) {
