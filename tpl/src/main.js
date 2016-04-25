@@ -20,6 +20,33 @@ let processQueue = function() {
 }
 setInterval(processQueue, 50)
 
+// setup loading animations
+let setupLoadingAnim = function(grid) {
+  let images = grid.children
+
+  for (var i = 0; i < images.length; i++) {
+    let img = images[i]
+    img.onload = enterQueue.bind(this, i)
+  }
+}
+
+let insertImages = function({grid, images}) {
+  let imgHTML = images.map(img => {
+    return `<img src="img/${img.webpthumb}" scrset="img/${img.webpthumb}, img/${img.jpegthumb}" />`
+  }).join('')
+  grid.innerHTML = imgHTML
+}
+
+let getSlides = function(images) {
+  return images.map(i => ({src:i.webpfull, w,h}))
+}
+
+let pswpInit = function({cfg, images}) {
+
+  // var slides =
+
+}
+
 
 // hook into already in progress gallery fetch
 galleryFetch
@@ -27,19 +54,8 @@ galleryFetch
 
   let grid = document.querySelector('.grid')
 
-  let imgHTML = images.map(img => {
-    return `<img src="img/${img.webpthumb}" scrset="img/${img.webpthumb}, img/${img.jpegthumb}" />`
-  }).join('')
-
-  grid.innerHTML = imgHTML
-
-  // setup loading animations
-  var images = grid.children
-
-  for (var i = 0; i < images.length; i++) {
-    let img = images[i]
-    console.log(img, i)
-    img.onload = enterQueue.bind(this, i)
-  }
+  insertImages({grid, images})
+  setupLoadingAnim(grid)
+  pswpInit({cfg, images})
 
 })

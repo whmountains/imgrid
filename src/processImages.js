@@ -104,6 +104,7 @@ var convertImg = function({image, cfg}) {
   return Promise.all([infoActions, saveActions])
   // return the image objects
   .then(function() {
+    console.log(image)
     return {image, cfg}
   })
 
