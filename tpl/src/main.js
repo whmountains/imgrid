@@ -18,7 +18,7 @@ let processQueue = function() {
     cursor = cursor + 1
   }
 }
-setInterval(processQueue, 50)
+setInterval(processQueue, 100)
 
 // setup loading animations
 let setupLoadingAnim = function(grid) {
