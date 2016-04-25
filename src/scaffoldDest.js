@@ -1,18 +1,23 @@
 "use strict";
 
 let path = require('path')
-let cpr  = require('./lib/cpr')
+let child = require('./lib/childProcess')
+let mkdirp = require('./lib/mkdirp')
 
 
 module.exports = function({cfg, images}) {
 
-  // template directory to copy from
-  var tplDir = path.resolve(__dirname, '../tpl')
-  var dstDir = cfg.dst
+  // template file to copy from
+  let tpl = path.resolve(__dirname, '../tpl.tar.gz')
 
-  return cpr(tplDir, dstDir, {
-    overwrite: true,
-    confirm: true,
+  // dest dir
+  let dst = cfg.dst
+
+  // create dest dir if it doesn't exist yet
+  return mkdirp(cfg.dst).then(() => {
+    // unpack template into dest
+    console.log('Unpacking gallery template')
+    return child.execAsync(`tar -xzf ${tpl} -C ${dst}`)
   })
 
   // pass through the original args for chaining
