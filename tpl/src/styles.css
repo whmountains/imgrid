@@ -1,0 +1,25 @@
+body {
+  margin: 0
+}
+
+.grid img {
+  opacity: 0;
+  max-height: 0px;
+  margin: 0;
+  max-width: 100%;
+  transition: all 0.25s;
+}
+
+.grid img.loaded {
+  margin: 5px;
+  max-height: 250px;
+  opacity: 1;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
