@@ -21,9 +21,6 @@ module.exports = function({cfg, images}) {
   })
 
   // pass through the original args for chaining
-  .then(function(files) {
-    console.log(`Scaffolded ${files.length} destination files`)
-    return {cfg, images}
-  })
+  .then(() => ({cfg, images}))
 
 }

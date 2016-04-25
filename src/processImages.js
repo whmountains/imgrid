@@ -7,19 +7,67 @@ var c     = require('chalk')
 
 var fs    = require('./lib/fs')
 
+// create a promise that is fulfilled
+//when the input stream emits the 'info' event
+let imgInfo = function(sharpStream) {
+  return new Promise((resolve, reject) => {
+    sharpStream.on('info', i => resolve(i))
+  })
+}
+
+// function to save an image and log about it
+let saveImg = function({basePath, sharpSource, filename, suffix, format}) {
+  // we can't use sharp's promise because it doesn't give us any image info
+  return new Promise((resolve, reject) => {
+
+    // defined separately so we can remove it from the EventEmitter
+    let imgCreated = function() {
+      console.log(`${c.green('CREATE')} ${createPath}`)
+      resolve()
+    }
+
+    // calculate the path to the new image
+    let createPath = path.join('img', `${filename}${suffix}.${format}`)
+    // open the destination file
+    var dstFile = fs.createWriteStream(path.join(basePath, createPath))
+    // fulfill our promise when the file is done being written to
+    dstFile.on('finish', imgCreated)
+
+    // clone the input stream
+    let stream = sharpSource.clone()
+    // set the format
+    stream.toFormat(format)
+    // pipe to dest file
+    stream.pipe(dstFile)
+
+    // reject on errors
+    stream.on('error', e => {
+      // prevent a false fulfillment
+      dstFile.removeListener('finish', imgCreated)
+      // reject the promise
+      reject(e)
+    })
+
+  })
+}
 
 // same "chainable task" signature but takes a single image
 var convertImg = function({image, cfg}) {
 
+  // basename of our new image
+  image.name = _.uniqueId()
+
+  // shortcut function for later
+  let save = function(sharpSource, suffix, format) {
+    return saveImg({
+      sharpSource, suffix, format,
+      basePath: cfg.dst,
+      filename: image.name
+    })
+  }
+
   // create source stream
   let pipeline = sharp(image.src)
-
-  // wait for image info
-  pipeline.on('info', function(info) {
-    console.log(info)
-    image.width  = info.width
-    image.height = info.height
-  })
 
   // resize
   let fullscreen = pipeline.clone()
@@ -27,38 +75,34 @@ var convertImg = function({image, cfg}) {
   let thumbnail  = pipeline.clone()
     .resize(null,250)
 
-  // destination file names
-  let uid = _.uniqueId()
-  image.jpegfull  = `${uid}-full.jpeg`
-  image.webpfull  = `${uid}-full.webp`
-  image.jpegthumb = `${uid}-thumb.jpeg`
-  image.webpthumb = `${uid}-thumb.webp`
-
-
-  // function to save an image and log about it
-  let saveImg = function(stream, filename) {
-
-    // we'll need this in two places
-    let createPath = path.join('img', filename)
-
-    // clone the stream and save it
-    return stream.clone()
-    .toFile(path.join(cfg.dst, createPath))
-
-    // log about it once we're done
-    .then(function() {
-      console.log(`${c.green('CREATE')} ${createPath}`)
-    })
-
-  }
-
-  // save each size in jpeg and webp
-  return Promise.all([
-    saveImg(fullscreen, image.jpegfull),
-    saveImg(fullscreen, image.webpfull),
-    saveImg(thumbnail,  image.jpegthumb),
-    saveImg(thumbnail,  image.webpthumb),
+  // wait to get the new dimentions of new images
+  let infoActions = Promise.all([
+    imgInfo(fullscreen),
+    imgInfo(thumbnail)
   ])
+  // save them
+  .then(function(infos) {
+    image.full.w  = infos[0].width
+    image.full.h  = infos[0].height
+    image.thumb.w = infos[1].width
+    image.thumb.h = infos[1].height
+  })
+
+  // save the images to files
+  let saveActions = Promise.all([
+    save(thumbnail,  '-thumb', 'jpeg'),
+    save(thumbnail,  '-thumb', 'webp'),
+    save(fullscreen, '-full',  'jpeg'),
+    save(fullscreen, '-full',  'webp'),
+  ])
+  .catch(e => {
+    console.log(`${c.red('ERROR')}  ${image.src}`)
+    console.log(e)
+  })
+
+  // wait for everything to finish
+  return Promise.all([infoActions, saveActions])
+  // return the image objects
   .then(function() {
     return {image, cfg}
   })
